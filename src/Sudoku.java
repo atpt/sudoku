@@ -433,7 +433,7 @@ class GraphicsTools {
 	}
 
 	public static void playEndingSound() {
-		playSound("ta-da.wav");
+		playSound("sounds/ta-da.wav");
 	}
 
 	// public static void playNormalSound() {
