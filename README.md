@@ -8,6 +8,7 @@ Compatible with any OS, but only tested on Mac so far.
 
 Compile simply with
 ```bash
+  cd src
   javac Sudoku.java
 ```
 and run with
@@ -17,6 +18,7 @@ and run with
 
 *Alternatively* use
 ```bash
+  cd src
   chmod 711 make
   ./make
 ```
