@@ -26,4 +26,4 @@ to create an executable .jar on Mac/Linux
 
 **Use**
 
-Follow the instructions on the main menu. For an explanation of the scoring system, refer to comments in ```MyGui.calcUserScore```.
+Follow the instructions on the main menu. For an explanation of the scoring system, refer to comments in ```MyGui.calcUserScore()```.
