@@ -17,7 +17,7 @@ and run with
 
 *Alternatively* use
 ```bash
-  chmod 711
+  chmod 711 make
   ./make
 ```
 to create an executable .jar on Mac/Linux
