@@ -1,5 +1,7 @@
 # sudoku
-[Java Swing] Sudoku puzzle generator, game and solver
+[Java Swing] 
+Sudoku puzzle generator, game and solver.
+
 Compatible with any OS, but only tested on Mac so far.
 
 **Build**
