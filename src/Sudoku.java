@@ -930,16 +930,19 @@ class ButtonPanel extends JPanel {
 	}
 }
 
+// Custom button which holds reference to cell, knows its grid position
 class MyButton extends JButton {
 	private Cell c;
 	private int row,column;
 	private ButtonPanel parent;
 
+	// Create button at grid position (row, column)
 	public MyButton(int row, int column, Cell c) {
 		this.c = c;
 		this.row = row;
 		this.column = column;
 		updateText();
+		// Ugly hack, for extra "dissapearing" button (TODO: fix)
 		if(row>8) {
 			setForeground(Color.WHITE);
 		}
@@ -977,13 +980,11 @@ class MyButton extends JButton {
 
 	public void updateText() {
 		setText(Integer.toString(c.getValue()));
-
-		// if(parent != null) {
-		// 	parent.updateColour();
-		// }
 	}
 
+	// Change text colour, and background colour if clashing/complete
 	public void updateColour() {
+		// Empty cells have invisible text; immutables black; user guesses blue
 		if(c.getValue() == 0) {
 			setForeground(Color.WHITE);
 		} else {
@@ -994,7 +995,8 @@ class MyButton extends JButton {
 				}
 			}
 		}
-		// System.out.println("x: "+Integer.toString(row)+", y: "+Integer.toString(column)+", complete: "+c.getComplete()+", clash: "+c.getClashing());
+		// Clashes (duplicates in row/column/box) have red background
+		// Cells in complete row/column/box have green background if none clash
 		if(c.getClashing()) {
 			setBackground(Color.RED);
 		} else {
@@ -1010,6 +1012,7 @@ class MyButton extends JButton {
 		}
 	}
 
+	// Get value of cell according to solution, if cell is mutable
 	public int requestHint() {
 		if(!c.getImmutable()) {
 			return c.requestHint(row, column);
@@ -1018,12 +1021,13 @@ class MyButton extends JButton {
 		}
 	}
 
+	// Ask cell to ask its grid for solution
 	public void requestSolution() {
 		c.requestSolution();
 	}
 
+	// Update value of cell if possible; update conflicts/completions if necc.
 	public void setValue(int v, boolean user) {
-		// System.out.println(Integer.toString(v));
 		if(user) {
 			if((c.getValue() != 0) && (c.getValue() != v)) {
 				parent.recordChangeGuess();
@@ -1031,52 +1035,17 @@ class MyButton extends JButton {
 		}
 		c.setValue(v);
 		parent.updateInfo(column, row, user);
-	// 	if(Utilities.clash(c.getGrid(), getRow(), getColumn(), c.getValue())) {
-	// 		c.setClashing(true);
-	// 	} else {
-	// 		c.setClashing(false);
-	// 	}
-	// 	if(Utilities.rowComplete(c.getGrid(), getRow())) {
-	// 		System.out.println("ROW: "+Integer.toString(getRow())+"COMPLETE");
-	// 		Utilities.setRowCompleteness(c.getGrid(), getRow(), true);
-	// 	} else {
-	// 		Utilities.setRowCompleteness(c.getGrid(), getRow(), false);
-	// 	}
-	// 	if(Utilities.colComplete(c.getGrid(), getColumn())) {
-	// 		System.out.println("COLUMN: "+Integer.toString(getColumn())+"COMPLETE");
-	// 		Utilities.setColCompleteness(c.getGrid(), getColumn(), true);
-	// 	} else {
-	// 		Utilities.setColCompleteness(c.getGrid(), getColumn(), false);
-	// 	}
-	// 	if(Utilities.boxComplete(c.getGrid(), getColumn(), getRow())) {
-	// 		Utilities.setBoxCompleteness(c.getGrid(), getColumn(), getRow(), true);
-	// 	} else {
-	// 		Utilities.setBoxCompleteness(c.getGrid(), getColumn(), getRow(), false);
-	// 	}
-	// 	updateText();
 	}
 
 }
 
+// Creates menu and game screen, has ability to refresh game screen display
 class GraphicsHandler {
 
 	private MyGui myGUI = new MyGui();
 	private MainMenu mainMenu = new MainMenu();
 
-	public void init() {
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				// mainMenu.createMenu();
-				// mainMenu.updateDisplay();
-				myGUI.createGUI();
-			}
-		});
-	}
-
-	public void destroy() {
-		myGUI = new MyGui();
-	}
-
+	// Initialise the main menu
 	public void createMenu(GraphicsHandler handler) {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -1086,25 +1055,43 @@ class GraphicsHandler {
 		});
 	}
 
+	// Run the game
+	public void init() {
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				myGUI.createGUI();
+			}
+		});
+	}
+
+	// Clear the game screen
+	public void destroy() {
+		myGUI = new MyGui();
+	}
+
+	// Add buttons to myGUI based on cells in grid g
 	public void createButtons(Grid g) {
 
+		// Make each box 60x60 pixels, and start 60x60 from top-left corner
 		int x = 60;
 		int y = 60;
 		int width = 60;
 		int height = 60;
+		// Iterate over cells
 		for(int j=0; j<9; j++) {
 			for(int i=0; i<9; i++) {
-				// System.out.println(Integer.toString(x)+", "+Integer.toString(y));
-
+				// Add button for relevant cell
 				myGUI.addButton(i, j, x, y, width, height, g.getCell(i, j));
-				// myGUI.updateDisplay();
+
 				x += width;
+				// Place small gaps after every 3rd column to group them
 				if((i % 3) == 2) {
 					x += (width / 6);
 				}
 			}
 			x = width;
 			y += height;
+			// Place small gaps after every 3rd row to group them
 			if((j % 3) == 2) {
 				y += (height / 6);
 			}
@@ -1123,15 +1110,16 @@ class GraphicsHandler {
 		myGUI.forceFullUpdate(user);
 	}
 
-
 }
 
+// Holds one number in the Grid, plus some meta-info such as immutability,
+// whether the value clashes with others etc.
 class Cell {
 	private int value; // 0-9; 0 := EMPTY
-	private boolean immutable;
-	private boolean clashing;
-	private Grid gPointer;
-	private boolean complete;
+	private boolean immutable; // True for cells filled during puzzle generation
+	private boolean clashing; // True if same value exists in row/column/box
+	private Grid gPointer; // Reference to parent, for handling input
+	private boolean complete; // True if row OR column OR box is complete
 
 	public Cell() {
 		this.value = 0;
@@ -1143,11 +1131,12 @@ class Cell {
 		return value;
 	}
 
+	// Return true if part of a Grid with no clashes
 	public boolean noClashes() {
 		return (gPointer.getNumberOfClashes() == 0);
 	}
 
-
+	// Change value to v, if mutable
 	public void setValue(int v) {
 		assert ((v >=0) && (v <=9));
 		if(!this.immutable) {
@@ -1155,6 +1144,7 @@ class Cell {
 		}
 	}
 
+	// Change value to v, ignoring mutability. USE SPARINGLY!
 	public void forceValue(int v) {
 		assert ((v >=0) && (v <=9));
 		this.value = v;
@@ -1196,16 +1186,20 @@ class Cell {
 		return this.complete;
 	}
 
+	// Ask parent for hint and return it
 	public int requestHint(int row, int column) {
 		return gPointer.hint(row, column);
 	}
 
+	// Ask parent to solve itself
 	public void requestSolution() {
 		gPointer.autoSolve();
 	}
 }
 
+// Hold two sets of coordinates, for two cells in same box/row/col which clash
 class Clash {
+	// (x1, y1) is first cell, (x2, y2) is second cell
 	public int x1;
 	public int y1;
 	public int x2;
@@ -1218,12 +1212,14 @@ class Clash {
 		this.y2 = y2;
 	}
 
+	// Return true if (x, y) is one of the two clashing cells
 	public boolean containsCell(int x, int y) {
 		return ((x == x1) && (y == y1)) || ((x == x2) && (y == y2));
 	}
 
 }
 
+// Hold a list of clashes
 class ClashList {
 	private ArrayList<Clash> list;
 
@@ -1235,6 +1231,7 @@ class ClashList {
 		return list.size();
 	}
 
+	// Return true if a clash of the same two cells is already recorded
 	public boolean existing(int x1, int y1, int x2, int y2) {
 		for(Clash c : list) {
 			if(c.containsCell(x1, y1) && c.containsCell(x2, y2)) {
@@ -1244,31 +1241,40 @@ class ClashList {
 		return false;
 	}
 
+	// Record clash of two cells, if not already recorded
 	public void addClash(int x1, int y1, int x2, int y2) {
 		if(!existing(x1, y1, x2, y2)) {
 			list.add(new Clash(x1, y1, x2, y2));
 		}
 	}
 
+	// Remove all clashes featuring (x, y). Used when value of (x, y) changes
 	public void removeClashes(int x, int y) {
 		ArrayList<Clash> removals = new ArrayList<Clash>();
+		// Build up list of clashes containing (x, y)
 		for(Clash c : list) {
 			if(c.containsCell(x, y)) {
 				removals.add(c);
 			}
 		}
+		// Then remove them all
 		list.removeAll(removals);
 	}
 
+	// Update clash attributes of cells; return true if any changed
 	public boolean updateCells(Grid g) {
 		boolean change = false;
 		boolean[][] trues = new boolean[9][9];
+		// Iterate over all clashes; handle clashing cells
 		for(Clash c : list) {
+			// If setCellClashing ever returns true, change will stay true
 			change = g.setCellClashing(c.x1, c.y1, true) || change;
 			change = g.setCellClashing(c.x2, c.y2, true) || change;
+			// Record clashing cells in trues
 			trues[c.x1][c.y1] = true;
 			trues[c.x2][c.y2] = true;
 		}
+		// Handle non-clashing cells
 		for(int y=0; y<9; y++) {
 			for(int x=0; x<9; x++) {
 				if(!trues[x][y]) {
@@ -1285,7 +1291,6 @@ class ClashList {
 class Grid {
 	private Cell[][] cells;
 
-	// private int[][] completionMatrix; // True where cell is in a completed row OR column OR box
 	int completions; // 81 iff puzzle is complete
 
 	private boolean[] columnCompletionMatrix;
