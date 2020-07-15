@@ -26,6 +26,7 @@ import java.io.*;
 import javax.sound.sampled.*;
 
 
+// Bespoke main menu window
 class MainMenu extends JFrame {
 	GraphicsHandler handler; // Need a reference to this so we can use it to open other windows
 
@@ -56,19 +57,18 @@ class MainMenu extends JFrame {
 	Color pastelYellow;
 	Color deepBlue;
 
+	// Initialise the menu
 	public void createMenu(GraphicsHandler handler) {
 		this.handler = handler;
 
-		// pastelBlue = new Color((float) (175.0/255.0),(float) (218.0/255.0),(float) (240.0/255.0));
-		// pastelPink = new Color((float) (255.0/255.0),(float) (219.0/255.0),(float) (240.0/255.0));
-
+		// Define background colours
 		pastelBlue = GraphicsTools.makeColor(175.0, 218.0, 240.0);
 		pastelPink = GraphicsTools.makeColor(255.0, 219.0, 240.0);
 		pastelYellow = GraphicsTools.makeColor(252.0, 245.0, 151.0);
 		deepBlue = GraphicsTools.makeColor(30.0, 57.0, 58.0);
 
 		setTitle("Sudoku - menu");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Close app
 		setSize(750, 750);
 		setFocusable(true);
 
@@ -79,7 +79,7 @@ class MainMenu extends JFrame {
 		contentPanel.setSize(750,750);
 		contentPanel.setBackground(Color.WHITE);
 
-
+		// mainPanel holds slider and custom start button
 		mainPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
@@ -88,9 +88,9 @@ class MainMenu extends JFrame {
 		};
 		mainPanel.setLayout(new GridBagLayout());
 		mConstraints = new GridBagConstraints();
-		// mainPanel.setSize(700,300);
 		mainPanel.setBackground(pastelBlue);
 
+		// quickStartPanel holds easy/medium/hard buttons
 		quickStartPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
@@ -101,6 +101,7 @@ class MainMenu extends JFrame {
 		qConstraints = new GridBagConstraints();
 		quickStartPanel.setBackground(pastelPink);
 
+		// helpPanel holds instruction text
 		helpPanel = new JPanel() {
 			@Override
 			public Dimension getPreferredSize() {
@@ -112,6 +113,7 @@ class MainMenu extends JFrame {
 
 		add(contentPanel);
 
+		// Arrange in order
 		general.gridx = 0;
 		general.gridy = 0;
 		contentPanel.add(quickStartPanel, general);
@@ -131,6 +133,7 @@ class MainMenu extends JFrame {
 
 	}
 
+	// Add a custom JTextPane containing instructions to helpPanel
 	private void createHelp() {
 		JTextPane text = new JTextPane() {
 			@Override
@@ -142,6 +145,7 @@ class MainMenu extends JFrame {
 		text.setEditable(false);
 		text.setBackground(pastelYellow);
 
+		// Need different strings for different formatting
 		String instructionsTitle = new String("Starting a Game:");
 		String instructions = new String("\nTo start, adjust the difficulty using the slider and press ");
 		String instructions2 = new String("Custom game");
@@ -164,6 +168,7 @@ class MainMenu extends JFrame {
 		String font = "Helvetica";
 		int fontSize = 18;
 		int titleFontSize = fontSize + 2;
+		// Add all strings to text, with appropriate colour, bold/italic etc.
 		GraphicsTools.addStyledText(text, instructionsTitle, 0, font, titleFontSize, Color.BLACK, true, false, false);
 		GraphicsTools.addStyledText(text, instructions, 1, font, fontSize, deepBlue, false, false, false);
 		GraphicsTools.addStyledText(text, instructions2, 2, font, fontSize, Color.BLACK, false, true, false);
@@ -188,6 +193,7 @@ class MainMenu extends JFrame {
 		text.setVisible(true);
 	}
 
+	// Add custom start button to mainPanel
 	private void createStartButton() {
 
 		startPanel = new JPanel() {
@@ -218,19 +224,25 @@ class MainMenu extends JFrame {
 
 				int blanks, iters;
 				boolean relaxUniqueness = false;
+				// Number of empty spaces for the user to fill
 				blanks = 81 - slider.getValue();
 
+				// For puzzles with many blanks, use less iterations when generating
+				// Saves time, marginally increases probability of non-unique solution
 				if(blanks > 40) {
 					iters = 8;
 				} else {
 					iters = 16;
 				}
+				// If there are > 50 blanks, allow puzzles with multiple solutions.
+				// Otherwise generation may take > 1 minute
 				if(blanks > 50) {
 					relaxUniqueness = true;
 				}
 
 				Generator.generatePuzzle(g, blanks, iters, relaxUniqueness);
 
+				// Clear existing handler if it exists; prevents bugs
 				handler.destroy();
 				handler.init();
 				handler.createButtons(g);
@@ -243,6 +255,7 @@ class MainMenu extends JFrame {
 
 	}
 
+	// Add number of clues slider and text to sliderPanel
 	private void createSlider() {
 
 		sliderPanel = new JPanel() {
@@ -281,14 +294,6 @@ class MainMenu extends JFrame {
 		};
 		sliderHelp.setEditable(false);
 		sliderHelp.setBackground(pastelBlue);
-		// sliderHelp.setText("Number of clues\nChoose more clues for an easier puzzle");
-		// sliderHelp.setFont(new Font("Helvetica", Font.PLAIN, 20));
-
-
-		// StyledDocument doc = sliderHelp.getStyledDocument();
-		// SimpleAttributeSet attributeSet = new SimpleAttributeSet();
-		// StyleConstants.setAlignment(attributeSet, StyleConstants.ALIGN_CENTER);
-		// doc.setParagraphAttributes(0, doc.getLength() - 1, attributeSet, false);
 
 		String helpText1 = new String("Number of clues");
 		String helpText2 = new String("\n(Choose more clues for an easier puzzle)");
@@ -298,12 +303,10 @@ class MainMenu extends JFrame {
 		GraphicsTools.addStyledText(sliderHelp, helpText1, 0, font, fontSize, Color.BLACK, true, false, true);
 		GraphicsTools.addStyledText(sliderHelp, helpText2, 1, font, fontSize, Color.BLACK, false, false, true);
 
-		// sliderHelp.setCharacterAttributes(attributeSet, true);
-
-
 		sliderPanel.add(sliderHelp);
 	}
 
+	// Add easy/medium/hard buttons to quickStartPanel
 	public void createQuickStartButtons() {
 		int width = 190;
 		int height = 90;
@@ -390,6 +393,8 @@ class MainMenu extends JFrame {
 
 	}
 
+	// Display all elements. Only needs to be called once as there are no
+	// moving parts
 	public void updateDisplay() {
 		setVisible(true);
 		mainPanel.setVisible(true);
@@ -403,7 +408,9 @@ class MainMenu extends JFrame {
 
 }
 
+// Static helper methods for drawing graphics
 class GraphicsTools {
+	// Add the text s to pane in specified format
 	public static void addStyledText(JTextPane pane, String s, int id, String font, int fontSize, Color color, boolean bold, boolean italic, boolean center) {
 		StyledDocument doc = pane.getStyledDocument();
 		SimpleAttributeSet attributeSet = new SimpleAttributeSet();
@@ -428,29 +435,13 @@ class GraphicsTools {
 		doc.setParagraphAttributes(0, doc.getLength() - 1, attributeSet, false);
 	}
 
+	// Return a Color object for rgb triplet specified in [0,255]
 	public static Color makeColor(double r, double g, double b) {
 		return new Color((float) (r/255.0),(float) (g/255.0),(float) (b/255.0));
 	}
 
-	public static void playEndingSound() {
-		playSound("sounds/ta-da.wav");
-	}
 
-	// public static void playNormalSound() {
-	// 	playSound();
-	// }
-	//
-	// public static void playLineFillSound() {
-	// 	playSound();
-	// }
-	//
-	// public static void playErrorSound() {
-	// 	playSound();
-	// }
 	// TODO: Add more sounds
-	// Add menu button panel to game at bottom, with hint, sound on/off, solve, restart etc.
-	// Clean up (remove commented out lines, add better comments, refactor)
-
 	// Credit to https://www.cs.miami.edu/home/visser/csc329-files/SoundJava.pdf for demonstrating how to play sound
 	public static void playSound(String filename) {
 		try {
@@ -463,22 +454,21 @@ class GraphicsTools {
 			clip.open(stream);
 			clip.start();
 
-
 		} catch (Exception e) {
 			return;
 		}
 	}
 }
 
+// Custom game GUI: holds graphics, tracks the score and does gameover popup
 class MyGui extends JFrame {
-	// private JPanel contentPanel;
-	// GridBagConstraints constraints;
 
 	private ButtonPanel buttonHolder = new ButtonPanel(this);
 	private int score, hints, changedGuesses; // Internal score (0-27), #hints requested, #changed values of filled cells
 	private boolean autoSolved; // Whether autoSolver was used -- scores 0
 	private long startTime;
 
+	// Construct window
 	public void createGUI() {
 		setTitle("Sudoku");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -494,10 +484,13 @@ class MyGui extends JFrame {
 
 	}
 
+	// Tell buttonHolder to give its buttons a reference to their parent
+	// Needed so buttons can hand over input processing
 	public void addReferences() {
 		buttonHolder.addReferences(buttonHolder);
 	}
 
+	// Output and focus
 	public void updateDisplay(boolean user) {
 		setVisible(true);
 		toFront();
@@ -505,10 +498,13 @@ class MyGui extends JFrame {
 		buttonHolder.updateDisplay(user);
 	}
 
+	// Force every button in the holder to update graphics
+	// Useful when many have been modified e.g. by auto-solver
 	public void forceFullUpdate(boolean user) {
 		buttonHolder.forceFullUpdate(user);
 	}
 
+	// Return String telling user how they did, based on their score s
 	private String getCustomScoreMessage(int s) {
 		if(s == 0) {
 			return new String("TERRIBLE: You need to try harder");
@@ -525,7 +521,7 @@ class MyGui extends JFrame {
 		}
 	}
 
-
+	// Create and display a new window with game statistics (score, time etc.)
 	public void gameoverPopup() {
 		JFrame window = new JFrame();
 		window.setSize(750, 350);
@@ -539,8 +535,7 @@ class MyGui extends JFrame {
 				return new Dimension(750,350);
 			};
 		};
-		// panel.setLayout(new GridBagLayout());
-		// Color yellow = new Color((float) (245.0/255.0),(float) (220.0/255.0),(float) (14.0/255.0));
+
 		Color pink = GraphicsTools.makeColor(242.0, 0.0, 147.0);
 
 		panel.setBackground(Color.GREEN);
@@ -557,6 +552,7 @@ class MyGui extends JFrame {
 		text.setEditable(false);
 		text.setBackground(Color.GREEN);
 		int finalScore = calcUserScore(true);
+		// Different strings so statistics can be highlighted pink and bold
 		String message0 = new String("CONGRATULATIONS!");
 		String message1 = new String("\nTime used: ");
 		String message2 = new String(displayTime());
@@ -567,6 +563,7 @@ class MyGui extends JFrame {
 
 		String font = "Helvetica";
 		int fontSize = 60;
+		// Add normal text in black and statistics in bold pink
 		GraphicsTools.addStyledText(text, message0, 0, font, fontSize, Color.BLACK, true, false, true);
 		GraphicsTools.addStyledText(text, message1, 1, font, fontSize, Color.BLACK, false, false, true);
 		GraphicsTools.addStyledText(text, message2, 2, font, fontSize, pink, true, false, true);
@@ -574,35 +571,36 @@ class MyGui extends JFrame {
 		GraphicsTools.addStyledText(text, message4, 4, font, fontSize, pink, true, false, true);
 		GraphicsTools.addStyledText(text, message5, 5, font, fontSize, Color.BLACK, false, true, true);
 
-		// text.setFont(new Font("Helvetica", Font.PLAIN, 60));
-
-
 		panel.add(text);
 		panel.setVisible(true);
 		text.setVisible(true);
 
-		GraphicsTools.playEndingSound();
+		GraphicsTools.playSound("sounds/ta-da.wav");
 
 	}
 
-
+	// Get score of grid associated with buttonHolder
 	private int getScore() {
 		return buttonHolder.getGrid().score();
 	}
 
+	// Get % of lines/rows/boxes filled, [0-100]
 	private int getCompletionPercentage() {
 		// Use number of groups of 9 completed, convert to %
 		return (int) ((((double) getScore()) / 27.0) * 100.0);
 	}
 
+	// Mark that user has pressed hint
 	public void recordHint() {
 		hints++;
 	}
 
+	// Mark that user has 'cheated'
 	public void recordAutoSolve() {
 		autoSolved = true;
 	}
 
+	// Mark that user changed a previous guess
 	public void recordChangeGuess() {
 		changedGuesses++;
 	}
@@ -641,15 +639,15 @@ class MyGui extends JFrame {
 		s -= changes;
 
 		return s;
-
 	}
 
+	// Return seconds passed since startTime, rounded down
 	private long secondsUsed() {
 		long currentTime = System.currentTimeMillis();
 		return (currentTime - startTime) / 1000;
-
 	}
 
+	// Return String representation of minutes and seconds passed since startTime
 	private String displayTime() {
 		long secondsUsed = secondsUsed();
 		long minutesUsed = secondsUsed / 60;
@@ -658,6 +656,7 @@ class MyGui extends JFrame {
 		return timeString(minutesUsed, secondsUsed);
 	}
 
+	// Return String representation of # of minutes and seconds
 	private String timeString(long m, long s) {
 		if(m > 0) {
 			 return new String(Long.toString(m) + "m "+ Long.toString(s) + "s");
@@ -665,16 +664,21 @@ class MyGui extends JFrame {
 		return new String(Long.toString(s) + "s");
 	}
 
+	// Modify window title to display score and time used
+	// Check gameover condition and make gameover popup if needed
 	public void updateTitle(boolean user) {
 
-		score = getScore();
+		score = getScore(); // 0-27
+		// All 27 lines/rows/boxes complete; game is being played by human user
 		if((score == 27) && user) {
 			gameoverPopup();
 		}
 
+		// Update title
 		setTitle("Sudoku | Score: "+calcUserScore(false)+" | Time used: "+displayTime()+" | Progress: "+Integer.toString(getCompletionPercentage())+"%");
 	}
 
+	// Initialise game state info; i.e. clashes, complete lines
 	public void initInfo() {
 		for(int i=0; i<9; i++) {
 			for(int j=0; j<9; j++) {
@@ -683,21 +687,27 @@ class MyGui extends JFrame {
 		}
 	}
 
+	// Add a button at logical coordinates (row,column), graphical coordinates
+	// (graphicX, graphicY), holding contents c
 	public void addButton(int row, int column, int graphicX, int graphicY, int width, int height, Cell c) {
-		// System.out.println(buttonHolder);
 		this.buttonHolder.addButton(row, column, graphicX, graphicY, width, height, c);
 	}
 }
 
+// Hold 2D array of buttons; handle input when these buttons are clicked
 class ButtonPanel extends JPanel {
 
 	private MyButton[][] buttons;
 	private int cursorX = 0;
 	private int cursorY = 0;
+	// Reference to GUI that created this, so we can tell it to record statistics
 	private MyGui guiPointer;
 
+	// Make window and add list of actions performable
 	public ButtonPanel(MyGui guiPointer) {
 		this.guiPointer = guiPointer;
+		// Last row and column are unused; this is a dirty workaround for a
+		// graphical bug. TODO: reduce to [9][9] without last button dissapearing
 		buttons = new MyButton[10][10];
 
 		setVisible(true);
@@ -707,6 +717,8 @@ class ButtonPanel extends JPanel {
 		InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
     ActionMap actionMap = getActionMap();
 
+		// Actions for button presses 0-9, which (try to) set the value of
+		// the currently selected cell
 		Action action0 = new AbstractAction() {
       public void actionPerformed(ActionEvent actionEvent) {
         MyButton selectedButton = getSelectedButton();
@@ -767,6 +779,9 @@ class ButtonPanel extends JPanel {
 				selectedButton.setValue(9, true);
       }
     };
+
+		// Action for asking for a hint. Tries to set value of selected cell
+		// to value from solution, if legal
 		Action hint = new AbstractAction() {
       public void actionPerformed(ActionEvent actionEvent) {
 				MyButton selectedButton = getSelectedButton();
@@ -777,6 +792,7 @@ class ButtonPanel extends JPanel {
 				}
       }
     };
+		// Action for auto-solving. Tries to set value of all cells to solution
 		Action solve = new AbstractAction() {
       public void actionPerformed(ActionEvent actionEvent) {
 				guiPointer.recordAutoSolve();
@@ -785,6 +801,7 @@ class ButtonPanel extends JPanel {
       }
     };
 
+		// Add keypresses of buttons [0-9], 'H', 'S' to inputMap
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_0, 0, false), "Pressed0");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, 0, false), "Pressed1");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_2, 0, false), "Pressed2");
@@ -798,6 +815,7 @@ class ButtonPanel extends JPanel {
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_H, 0, false), "hint");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0, false), "solve");
 
+		// Associate the keypresses with actions above
 		actionMap.put("Pressed0", action0);
 		actionMap.put("Pressed1", action1);
 		actionMap.put("Pressed2", action2);
@@ -817,6 +835,7 @@ class ButtonPanel extends JPanel {
 		guiPointer.recordChangeGuess();
 	}
 
+	// Update display of all buttons; update title (checks for gameover)
 	public void updateDisplay(boolean user) {
 		for(int j=0; j<9; j++) {
 			for(int i=0; i<9; i++) {
@@ -827,6 +846,7 @@ class ButtonPanel extends JPanel {
 		guiPointer.updateTitle(user);
 	}
 
+	// Does work of updateDisplay; additionally updates conflict/completion info
 	public void forceFullUpdate(boolean user) {
 		for(int j=0; j<9; j++) {
 			for(int i=0; i<9; i++) {
@@ -834,9 +854,9 @@ class ButtonPanel extends JPanel {
 			}
 		}
 		guiPointer.updateTitle(user);
-		// updateDisplay();
 	}
 
+	// Gives buttons a reference to this
 	public void addReferences(ButtonPanel bp) {
 		for(int j=0; j<9; j++) {
 			for(int i=0; i<9; i++) {
@@ -845,6 +865,7 @@ class ButtonPanel extends JPanel {
 		}
 	}
 
+	// Update text colours for all buttons
 	public void updateColour() {
 		for(int j=0; j<9; j++) {
 			for(int i=0; i<9; i++) {
@@ -854,6 +875,7 @@ class ButtonPanel extends JPanel {
 		repaint();
 	}
 
+	// Return grid associated with first button/cell, if present
 	public Grid getGrid() {
 		if(buttons == null) {
 			return null;
@@ -861,22 +883,22 @@ class ButtonPanel extends JPanel {
 		return buttons[0][0].getGrid();
 	}
 
+	// Update info on conflicts + complete lines after cell (x,y) modified
+	// Also trigger graphical update
 	public void updateInfo(int x, int y, boolean user) {
 
 		Grid g = getGrid();
 
-		// boolean change;
-		// int previousClashes = g.getNumberOfClashes();
-
 		g.updateClash(y, x);
 
 		g.updateCompleteness(x, y);
-		// change = (previousClashes != clashes) || change;
-		// if(change) {
+
 		updateDisplay(user);
-		// }
+
 	}
 
+	// Add a button at logical coordinates (row,column), graphical coordinates
+	// (graphicX, graphicY), holding contents c
 	public void addButton(int row, int column, int graphicX, int graphicY, int width, int height, Cell c) {
 
 		MyButton b = new MyButton(row, column, c);
@@ -884,6 +906,7 @@ class ButtonPanel extends JPanel {
 
 		add(b);
 
+		// Clicking on button updates cursor
 		b.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				cursorX = b.getRow();
@@ -892,15 +915,16 @@ class ButtonPanel extends JPanel {
 			}
 		});
 
-
 		buttons[row][column] = b;
 
 	}
 
+	// Return button most recently clicked on (selected)
 	public MyButton getSelectedButton() {
 		return buttons[cursorX][cursorY];
 	}
 
+	// Output cursor position to std.out; for debugging
 	public void printCursorLocation() {
 		System.out.println(Integer.toString(cursorX)+", "+Integer.toString(cursorY));
 	}
