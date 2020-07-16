@@ -1,3 +1,4 @@
+// Use 2 spaces for tabs for best readability
 import javax.swing.*;
 import java.util.ArrayList;
 import java.awt.event.ActionListener;
@@ -25,6 +26,50 @@ import javax.swing.text.*;
 import java.io.*;
 import javax.sound.sampled.*;
 
+// Launch game; or test other classes
+class Sudoku {
+
+	private static void game(int blanks) {
+		Grid g = new Grid();
+		// Don't require unique solution with > 50 spaces; takes too long
+		Generator.generatePuzzle(g, blanks, 10, (blanks > 50));
+
+		GraphicsHandler handler = new GraphicsHandler();
+		handler.init();
+		handler.createButtons(g);
+	}
+
+	private static void launchMenu() {
+		GraphicsHandler handler = new GraphicsHandler();
+		handler.createMenu(handler);
+	}
+
+	// Return integer value of (position)th argument, -1 if non-existent
+	private static int parseNumericArg(String[] args, int position) {
+		int n;
+		if (args.length > 0) {
+	    try {
+    		n = Integer.parseInt(args[position]);
+				return n;
+	    } catch (NumberFormatException e) {
+	      System.err.println("Argument" + args[position] + " must be an integer.");
+	      System.exit(1);
+	    }
+		}
+		return -1;
+	}
+
+	// If passed numeric argument; start game with that # of blank spaces
+	// Otherwise, launch the main menu
+	public static void main(String[] args) {
+		int blanks = parseNumericArg(args, 0);
+		if((blanks > 0) && (blanks <= 81))  {
+			game(blanks);
+		} else {
+			launchMenu();
+		}
+	}
+}
 
 // Bespoke main menu window
 class MainMenu extends JFrame {
@@ -1287,41 +1332,42 @@ class ClashList {
 
 }
 
-
+// Hold a sudoku grid: a 2D array of cells and gamestate info
 class Grid {
 	private Cell[][] cells;
 
 	int completions; // 81 iff puzzle is complete
 
+	// True for columns/rows/boxes with # 1-9, and no cells filled illegally
 	private boolean[] columnCompletionMatrix;
 	private boolean[] rowCompletionMatrix;
 	private boolean[][] boxCompletionMatrix;
 
-	// private int[][] clashMatrix; // True where cell has same value as one in its row OR column OR box
-	int clashes; // 0 iff clashMatrix is false EVERYWHERE
 
 	private ClashList clashList;
+	private int clashes; // 0 iff clashList is empty
 
+	// Construct; initialise all cells
 	public Grid() {
 		cells = new Cell[9][9];
 		for(int j=0; j<9; j++) {
 			for(int i=0; i<9; i++) {
-				cells[j][i] = new Cell();
+				cells[j][i] = new Cell(); // Cells have default value 0
 			}
 		}
-		// completionMatrix = new int[9][9]; // Initially false everywhere
-		completions = 0;
+
+		completions = 0; // All 0s -> no complete groups
 
 		rowCompletionMatrix = new boolean[9];
 		columnCompletionMatrix = new boolean[9];
 		boxCompletionMatrix = new boolean[3][3];
 
-		// clashMatrix = new int[9][9]; // Initialise false everywhere
-		clashes = 0;
+		clashes = 0; // All 0s -> no clashes
 		clashList = new ClashList();
-		addReferences(this);
+		addReferences(this); // Give cells reference to parent
 	}
 
+	// Return true iff o instanceof Grid and all cell VALUES equal
 	@Override
 	public boolean equals(Object o) {
 	  if (this == o) {
@@ -1344,6 +1390,7 @@ class Grid {
 		return true;
 	}
 
+	// Force the values of all g's Cells to equal the values of our Cells
 	public void copyTo(Grid g) {
 		for(int i=0; i<9; i++) {
 			for(int j=0; j<9; j++) {
@@ -1352,6 +1399,7 @@ class Grid {
 		}
 	}
 
+	// copyTo(g); additionally replicate values of getCellImmutability()
 	public void copyToWithImmutables(Grid g) {
 		for(int i=0; i<9; i++) {
 			for(int j=0; j<9; j++) {
@@ -1361,6 +1409,7 @@ class Grid {
 		}
 	}
 
+	// Make all non-zero Cells immutable; use to finalise puzzle
 	public void makeAllImmutable(boolean b) {
 		for(int i=0; i<9; i++) {
 			for(int j=0; j<9; j++) {
@@ -1371,7 +1420,8 @@ class Grid {
 		}
 	}
 
-	// Populate grid with values. Use immutable to make the results unchangeable by user, and force to override existing immutable values.
+	// Populate grid with values. Use immutable=true to finalise the puzzle,
+	// and force=true to override existing immutable values.
 	public void setupGrid(int[][] values, boolean immutable, boolean force) {
 		for(int i=0; i<9; i++) {
 			for(int j=0; j<9; j++) {
@@ -1387,6 +1437,7 @@ class Grid {
 		}
 	}
 
+	// Give Cells reference to this, for input handling
 	public void addReferences(Grid g) {
 		for(int j=0; j<9; j++) {
 			for(int i=0; i<9; i++) {
@@ -1425,55 +1476,28 @@ class Grid {
 
 	public boolean getCellClashing(int x, int y) {
 		return cells[x][y].getClashing();
-		// return clashMatrix[x][y];
 	}
-
-	// public void setCellClashing(int x, int y, boolean b) {
-	// 	cells[x][y].setClashing(b);
-	// 	clashMatrix[x][y] = b;
-	// }
 
 	public boolean setCellClashing(int x, int y, boolean b) {
 		return cells[x][y].setClashing(b);
-		// boolean change = (clashMatrix[x][y] != b);
-		// clashMatrix[x][y] = b;
-		// if(change) {
-		// 	if(b) {
-		// 		clashes += 1;
-		// 	} else {
-		// 		clashes -= 1;
-		// 	}
-		// }
-		// return change;
 	}
 
 
 	public boolean getCellComplete(int x, int y) {
 		return cells[x][y].getComplete();
-		// return completionMatrix[x][y];
 	}
-
-	// public void setCellComplete(int x, int y, boolean b) {
-	// 	cells[x][y].setComplete(b);
-	// 	completionMatrix[x][y] = b;
-	// }
 
 	public boolean setCellComplete(int x, int y, boolean b) {
 		boolean change = cells[x][y].setComplete(b);
-		// boolean change = (completionMatrix[x][y] != b);
-		// completionMatrix[x][y] = b;
 		if(change) {
-			if(b) {
-				completions += 1;
-			} else {
-				completions -= 1;
-			}
+			completions = (b) ? (completions + 1) : (completions - 1);
 		}
 		return change;
 	}
 
 
-	// Run AFTER updateClash, since clashes needs to be correct
+	// Update completion arrays after (x,y) changes value
+	// Run AFTER updateClash(), since completion requires no clashes
 	public boolean updateCompleteness(int y, int x) {
 		boolean change = false;
 
@@ -1491,16 +1515,13 @@ class Grid {
 				}
 			}
 		} else {
-			// Solution is valid; completeness is possible
+			// Solution is valid; completeness is possible. This precludes any
+			// duplicates within a row/column/box, so whenever all elements are
+			// non-empty (non-zero) we must have digits 1-9
 
 			int z; // Takes on values of cells
-			// boolean rowComplete = true;
-			// boolean columnComplete = true;
-			// boolean boxComplete = true;
-			// boolean rowWasComplete = rowCompletionMatrix[y];
-			// boolean columnWasComplete = columnCompletionMatrix[x];
-			// boolean boxWasComplete = boxCompletionMatrix[x][y];
 
+			// Assume true; iterate over row and set false if empty cell found
 			rowCompletionMatrix[y] = true;
 			for(int col=0; col<9; col++) {
 				z = getCellValue(col, y);
@@ -1510,21 +1531,21 @@ class Grid {
 				}
 			}
 
+			// Assume true; iterate over column and set false if empty cell found
 			columnCompletionMatrix[x] = true;
 			for(int row=0; row<9; row++) {
 				z = getCellValue(x, row);
-				// System.out.println(Integer.toString(z));
 				if(z == 0) {
 					columnCompletionMatrix[x] = false;
-					// System.out.println("Column: "+Integer.toString(x)+" incomplete. Empty in row "+Integer.toString(row));
 					break;
 				}
 			}
 
-
 			// Find top left coordinate of 3x3 box
 			int topLeftX = x - (x % 3);
 			int topLeftY = y - (y % 3);
+			// Assume true; iterate over box and set false if empty cell found
+			// Divide by 3 to go from [0,3,6] -> [0,1,2]
 			boxCompletionMatrix[topLeftX/3][topLeftY/3] = true;
 			for(int col=topLeftX; col<topLeftX+3; col++) {
 				for(int row=topLeftY; row<topLeftY+3; row++) {
@@ -1538,7 +1559,6 @@ class Grid {
 		}
 
 		// We know whether each row, column and box is complete. Now go over each cell and update the individual completeness value, which will be true wherever ONE OF these is true. setCellComplete will tell us whether these updates change anything, i.e. whether cell colours will need updating.
-
 		for(int row=0; row<9; row++) {
 			for(int col=0; col<9; col++) {
 				change = setCellComplete(col, row, (rowCompletionMatrix[row] || columnCompletionMatrix[col] || boxCompletionMatrix[col/3][row/3])) || change; // Change starts off false, update if it becomes true
@@ -1592,6 +1612,7 @@ class Grid {
 
 	}
 
+	// Return true if Grid is full and Cell values meet the Sudoku criteria
 	public boolean isSolution() {
 		ArrayList<Integer> rowPresent = new ArrayList<Integer>();
 		ArrayList<Integer> columnPresent = new ArrayList<Integer>();
@@ -1640,6 +1661,7 @@ class Grid {
 		return true;
 	}
 
+	// Make all cells mutable and empty the grid
 	public void clear() {
 		for(int i=0; i<9; i++) {
 			for(int j=0; j<9; j++) {
@@ -1649,6 +1671,7 @@ class Grid {
 		}
 	}
 
+	// Empty all immutable cells; use to clear user guesses
 	public void clearNonImmutables() {
 		for(int i=0; i<9; i++) {
 			for(int j=0; j<9; j++) {
@@ -1659,23 +1682,20 @@ class Grid {
 		}
 	}
 
+	// Return digit that goes at (row,col) according to Solver.solve()
+	// Uniqueness guaranteed if original puzzle has unique solution
 	public int hint(int row, int column) {
 		// Make a copy to solve on
 		Grid gCopy = new Grid();
 		copyToWithImmutables(gCopy);
 
 
-		// Ignore user's guesses as they may make solution impossible
+		// Ignore user's guesses as they may be wrong
 		gCopy.clearNonImmutables();
-
 
 		// Solve
 		Solver s = new Solver();
 		s.solve(gCopy, 0, false, 0);
-
-		// GraphicsHandler handler = new GraphicsHandler();
-		// handler.init();
-		// handler.createButtons(gCopy);
 
 		// Can't help
 		if(!gCopy.isSolution()) {
@@ -1687,27 +1707,32 @@ class Grid {
 
 	}
 
+	// Make and display copy of grid, with  mutable cells filled with values
+	// given by Solver.solve().
 	public void autoSolve() {
 
 		Grid gCopy = new Grid();
 		copyToWithImmutables(gCopy);
 
-		// Ignore user's guesses as they may make solution impossible
+		// Ignore user's guesses as they may be wrong
 		gCopy.clearNonImmutables();
 
 		Solver s = new Solver();
 		s.solve(gCopy, 0, false, 30000);
 
+		// Display in new window
 		GraphicsHandler handler = new GraphicsHandler();
 		handler.init();
 		handler.createButtons(gCopy);
 
 	}
 
+	// Return number of groups complete [0-27]
 	public int score() {
 		if(clashList.numberOfClashes() > 0) {
 			return 0;
 		}
+		// Count 'true's in completion arrays
 		int s = 0;
 		for(int i=0; i<9; i++) {
 			if(rowCompletionMatrix[i]) {
@@ -1716,6 +1741,7 @@ class Grid {
 			if(columnCompletionMatrix[i]) {
 				s++;
 			}
+			// i=5 gives [1][2], i=6 gives [2][0] etc.
 			if(boxCompletionMatrix[i/3][i%3]) {
 				s++;
 			}
@@ -1725,211 +1751,16 @@ class Grid {
 
 }
 
-class Utilities {
-
-	public static boolean clash(Grid g, int x, int y, int value) {
-		return (Utilities.rowClash(g, x, y, value) || Utilities.colClash(g, x, y, value) || Utilities.boxClash(g, x, y, value));
-	}
-
-	public static boolean rowClash(Grid g, int x, int y, int value) {
-		int z;
-		for(int col=0; col<9; col++) {
-			z = g.getCellValue(col, y);
-			if((col != x) && (z == value)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public static boolean colClash(Grid g, int x, int y, int value) {
-		int z;
-		for(int row=0; row<9; row++) {
-			z = g.getCellValue(x, row);
-			if((row != y) && (z == value)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public static boolean boxClash(Grid g, int x, int y, int value) {
-		int z;
-		int topLeftX = x - (x % 3);
-		int topLeftY = y - (y % 3);
-		for(int col=topLeftX; col<topLeftX+3; col++) {
-			for(int row=topLeftY; row<topLeftY+3; row++) {
-				z = g.getCellValue(col, row);
-				if(((col != x) || (row != y)) && (z == value)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	public static boolean rowComplete(Grid g, int y) {
-		int z;
-		for(int col=0; col<9; col++) {
-			z = g.getCellValue(col, y);
-			if((z == 0) || g.getCellClashing(col, y)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public static boolean colComplete(Grid g, int x) {
-		int z;
-		for(int row=0; row<9; row++) {
-			z = g.getCellValue(x, row);
-			if((z == 0) || g.getCellClashing(x, row)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public static boolean boxComplete(Grid g, int x, int y) {
-		int z;
-		int topLeftX = x - (x % 3);
-		int topLeftY = y - (y % 3);
-		for(int col=topLeftX; col<topLeftX+3; col++) {
-			for(int row=topLeftY; row<topLeftY+3; row++) {
-				z = g.getCellValue(col, row);
-				if((z == 0) || g.getCellClashing(x, y)) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	public static void setRowCompleteness(Grid g, int row, boolean value) {
-		for(int col=0; col<9; col++) {
-			g.setCellComplete(col, row, value);
-		}
-	}
-
-	public static void setColCompleteness(Grid g, int col, boolean value) {
-		for(int row=0; row<9; row++) {
-			g.setCellComplete(col, row, value);
-		}
-	}
-
-	public static void setBoxCompleteness(Grid g, int x, int y, boolean value) {
-		int topLeftX = x - (x % 3);
-		int topLeftY = y - (y % 3);
-		for(int col=topLeftX; col<topLeftX+3; col++) {
-			for(int row=topLeftY; row<topLeftY+3; row++) {
-				g.setCellComplete(col, row, value);
-			}
-		}
-	}
-
-
-}
-
-class Sudoku {
-
-
-	private static void runTestGame() {
-
-		Grid g = new Grid();
-
-		Generator.setupTrivialPuzzle(g);
-
-		GraphicsHandler handler = new GraphicsHandler();
-		handler.init();
-		handler.createButtons(g);
-
-	}
-
-	private static void game(int blanks) {
-		Grid g = new Grid();
-		Generator.generatePuzzle(g, blanks, 10, (blanks > 50));
-
-		GraphicsHandler handler = new GraphicsHandler();
-		handler.init();
-		handler.createButtons(g);
-	}
-
-	private static void launchMenu() {
-		GraphicsHandler handler = new GraphicsHandler();
-		handler.createMenu(handler);
-
-	}
-
-	private static void testGenerator(int blanks) {
-
-		Grid g = new Grid();
-
-		Generator.generatePuzzle(g, blanks, 10, blanks > 50);
-
-
-		// for(int i=0; i<80; i++) {
-		//
-		// 	Generator.clearRandomCell(g);
-		//
-		// 	System.out.println(Generator.hasUniqueSolution(g, 10));
-		//
-		// }
-
-		Solver s = new Solver();
-		s.solve(g, 15, true, 0);
-
-		// GraphicsHandler handler = new GraphicsHandler();
-		// handler.init();
-		// handler.createButtons(g);
-
-
-	}
-
-	private static void testSolver(int blanks) {
-
-		Solver s = new Solver();
-
-		Grid g = new Grid();
-		Generator.generateEasyGrid(g, blanks);
-
-		s.solve(g, 300, true, 0);
-
-		System.out.println(g.isSolution());
-
-		// GraphicsHandler handler = new GraphicsHandler();
-		// handler.init();
-		// handler.createButtons(g);
-
-	}
-
-	private static int parseNumericArg(String[] args, int position) {
-		int n;
-		if (args.length > 0) {
-	    try {
-    		n = Integer.parseInt(args[position]);
-				return n;
-	    } catch (NumberFormatException e) {
-	      System.err.println("Argument" + args[position] + " must be an integer.");
-	      System.exit(1);
-	    }
-		}
-		return -1;
-	}
-
-	public static void main(String[] args) {
-		int blanks = parseNumericArg(args, 0);
-		// runTestGame();
-		// testGenerator(blanks);
-		// game(blanks);
-		launchMenu();
-		// testSolver(blanks);
-	}
-}
-
+// Static methods for turning a Grid into a Sudoku puzzle
 class Generator {
 
+	// Return true iff # of solutions is exactly 1
+	// Run Solver.solve() 'iterations' times to probabilistically check
+	// whether it always yields same solution. solve() randomises order
+	// of guesses, so finds different solutions w.h.p if they exist.
 	public static boolean hasUniqueSolution(Grid g, int iterations) {
 		assert (iterations >= 0);
+		// Solved Grid trivially has 1 solution, itself
 		if(g.isSolution()) {
 			return true;
 		}
@@ -1940,14 +1771,16 @@ class Generator {
 
 		Grid solution1 = new Grid();
 		Grid solution2;
+		// Make a copy so we don't damage state of g
 		g.copyTo(solution1);
 
+		// Fix all filled-in values so solver can't change them
 		solution1.makeAllImmutable(true);
 
 		// Find the first solution
 		solvable = s.solve(solution1, 0, false, 30000);
+		// No solution -> no unique solution
 		if(!solvable) {
-			// System.out.println("Failed to solve first time");
 			return false;
 		}
 
@@ -1959,13 +1792,14 @@ class Generator {
 
 			solvable = s.solve(solution2, 0, false, 30000);
 			if(!solvable) {
-				// System.out.println("Failed to solve");
 				return false;
 			}
+			// Sanity check: shouldn't occur if solve() is bug-free
 			if(!solution2.isSolution()) {
 				System.out.println("WARNING: PRODUCED INVALID SOLUTION");
 				continue;
 			}
+			// Found a different solution
 			if(!solution1.equals(solution2)) {
 				return false;
 			}
@@ -1974,6 +1808,9 @@ class Generator {
 
 	}
 
+	// Add offset to all values of row; keep within [1,9]
+	// e.g. INPUT: row = [1,2,3,4,5,6,7,8,9] offset = 2
+	// 			OUTPUT: 		 [3,4,5,6,7,8,9,1,2]
 	public static int[] shift(int[] row, int offset) {
 		int[] newRow = new int[9];
 		// Deep copy, sub 1 to go from [1,9] to [0,8]
@@ -1985,14 +1822,16 @@ class Generator {
 		return newRow;
 	}
 
-	// Based on https://gamedev.stackexchange.com/questions/56149/how-can-i-generate-sudoku-puzzles/138228#138228
+	// Fill the Grid with the most obvious completed pattern
+	// Inspired by https://gamedev.stackexchange.com/questions/56149/how-can-i-generate-sudoku-puzzles/138228#138228
 	public static void generateSolvedGrid(Grid g, boolean immutable) {
 		int[][] values = new int[9][9];
 
+		// Make first row = [1,2,3,4,5,6,7,8,9]
 		for(int i=0; i<9; i++) {
 			values[0][i] = i+1;
 		}
-		// values[0] = IntStream.range(1,10).toArray(); // 1-9
+		// Each row is just the above row with values shifted by 1/3
 		values[1] = shift(values[0], 3);
 		values[2] = shift(values[1], 3);
 
@@ -2004,14 +1843,21 @@ class Generator {
 		values[7] = shift(values[6], 3);
 		values[8] = shift(values[7], 3);
 
+		// Populate g with values
 		g.setupGrid(values, immutable, false);
 
 	}
 
+	// Generate a realistic puzzle with given number of blanks
+	// Runs is the number of times Solver.solve() is run to check uniqueness:
+	// higher value increases confidence but also runtime
+	// relaxUniqueness=true drops the requirement for unique solution altogether
 	public static void generatePuzzle(Grid g, int blanks, int runs, boolean relaxUniqueness) {
-		assert ((blanks >= 0) && (blanks <= 64));
+		assert ((blanks >= 0) && (blanks <= 81));
 
+		// Fill in a trivial solution
 		generateSolvedGrid(g, true);
+		// Apply random shuffles 100 times to add variety
 		obscure(g, 100);
 
 		int x, y, value, iterations;
@@ -2021,30 +1867,34 @@ class Generator {
 			iterations = 0;
 			do {
 
-
+				// Find a random non-empty cell as a candidate to remove
 				do {
 					x = ThreadLocalRandom.current().nextInt(0, 9);
 					y = ThreadLocalRandom.current().nextInt(0, 9);
 					value = g.getCellValue(x, y);
 				} while(value == 0);
 
+				// Try emptying that cell
 				g.setCellImmutability(x, y, false);
 				g.forceCellValue(x, y, 0);
 
+				// Check if uniqueness still holds
 				uniqueSolution = hasUniqueSolution(g, runs);
 
+				// 'Cheat' if we've already emptied 50 cells and relaxing is allowed
 				if((!uniqueSolution) && relaxUniqueness && (i > 50)) {
 					System.out.println("RELAXING UNIQUENESS REQUIREMENT");
 					uniqueSolution = true;
 				}
 
-				// Backtrack
+				// Backtrack by putting original value back in
 				if(!uniqueSolution) {
 					g.forceCellValue(x, y, value);
 					g.setCellImmutability(x, y, true);
 				}
 
 				iterations++;
+				// Likely to have tried all candidates; give up and start again
 				if(iterations > 100) {
 					System.out.println("FAILED TO GENERATE");
 					g.clear();
@@ -2058,6 +1908,8 @@ class Generator {
 
 	}
 
+	// Quick method of creating an easy puzzle. Empties UP TO 'blanks'
+	// squares, possibly less as same one may be removed twice
 	public static void generateEasyGrid(Grid g, int blanks) {
 		assert (blanks >= 0 && blanks <= 81);
 		generateSolvedGrid(g, true);
@@ -2067,9 +1919,11 @@ class Generator {
 		}
 	}
 
+	// Swap over the values in col1 and col2 of g
 	private static void swapColumns(Grid g, int col1, int col2) {
 		int temp;
-		// Iterate over column, swapping each value individually
+		// Iterate over column, swapping each value individually so we only
+		// need one temp variable
 		for(int i=0; i<9; i++) {
 			temp = g.getCellValue(col1, i);
 			g.forceCellValue(col1, i, g.getCellValue(col2, i));
@@ -2077,9 +1931,11 @@ class Generator {
 		}
 	}
 
+	// Swap over the values in row1 and row2 of g
 	private static void swapRows(Grid g, int row1, int row2) {
 		int temp;
-		// Iterate over row, swapping each value individually
+		// Iterate over row, swapping each value individually so we only
+		// need one temp variable
 		for(int i=0; i<9; i++) {
 			temp = g.getCellValue(i, row1);
 			g.forceCellValue(i, row1, g.getCellValue(i, row2));
@@ -2088,38 +1944,48 @@ class Generator {
 	}
 
 	// Swap two columns within a "chunk", e.g. columns 0 and 2, or columns 7 and 8. Chunks are: | 0 1 2 | 3 4 5 | 6 7 8 |
-	// This preserves the validity of the grid
-	private static void swapRandomColumns(Grid g, int n) {
+	//  Preserves the validity of the grid
+	private static void swapRandomColumns(Grid g) {
 		int c1, c2, chunk;
 		chunk = ThreadLocalRandom.current().nextInt(0, 3);
 		chunk *= 3; // will be 0, 3 or 6
-		for(int i=0; i<n; i++) {
-			c1 = ThreadLocalRandom.current().nextInt(chunk, chunk+3);
-			do {
-				c2 = ThreadLocalRandom.current().nextInt(chunk, chunk+3);
-			} while (c1 == c2);
-			swapColumns(g, c1, c2);
-		}
+		// for(int i=0; i<n; i++) {
+		// Pick one col at random
+		c1 = ThreadLocalRandom.current().nextInt(chunk, chunk+3);
+		// Pick a distinct col at random
+		do {
+			c2 = ThreadLocalRandom.current().nextInt(chunk, chunk+3);
+		} while (c1 == c2);
+		swapColumns(g, c1, c2);
+		// }
 	}
 
 	// Same as swapRandomColumns but for rows
-	private static void swapRandomRows(Grid g, int n) {
+	private static void swapRandomRows(Grid g) {
 		int r1, r2, chunk;
 		chunk = ThreadLocalRandom.current().nextInt(0, 3);
 		chunk *= 3; // will be 0, 3 or 6
-		for(int i=0; i<n; i++) {
-			r1 = ThreadLocalRandom.current().nextInt(chunk, chunk+3);
-			do {
-				r2 = ThreadLocalRandom.current().nextInt(chunk, chunk+3);
-			} while (r1 == r2);
-			swapRows(g, r1, r2);
-		}
+		// for(int i=0; i<n; i++) {
+		r1 = ThreadLocalRandom.current().nextInt(chunk, chunk+3);
+		do {
+			r2 = ThreadLocalRandom.current().nextInt(chunk, chunk+3);
+		} while (r1 == r2);
+		swapRows(g, r1, r2);
+		// }
 	}
 
+	// Create a random permutation which is still a valid grid
+	// TODO: add more sophisticated methods to prevent regular patterns
 	private static void obscure(Grid g, int swaps) {
+		// Change roles of digits. Makes no difference to us, but users don't
+		// notice isomorphic puzzles
 		shuffleDigits(g);
-		swapRandomColumns(g, swaps);
-		swapRandomRows(g, swaps);
+		// Randomly switch columns and rows around 'swaps' times
+		// Interleave the two operations for better diffusion
+		for(int i=0; i<swaps; i++) {
+			swapRandomColumns(g);
+			swapRandomRows(g);
+		}
 	}
 
 	// Randomly swap roles of digits, e.g. 1s becomes 7s, 5s become 3s
@@ -2128,7 +1994,7 @@ class Generator {
 		for(int i=1; i<10; i++) {
 			list.add(i);
 		}
-		Collections.shuffle(list);
+		Collections.shuffle(list); // list.get(0) is value to replace 1 etc.
 		int value;
 		for(int i=0; i<9; i++) {
 			for(int j=0; j<9; j++) {
@@ -2140,6 +2006,7 @@ class Generator {
 		}
 	}
 
+	// Empty a random non-empty cell; ignore immutability
 	public static void clearRandomCell(Grid g) {
 		int x,y;
 		// If we can't find one in 500 tries the grid's probably empty
@@ -2155,6 +2022,48 @@ class Generator {
 		}
 	}
 
+	// True iff placing value at (x,y) would conflict with other value in row y
+	public static boolean rowClash(Grid g, int x, int y, int value) {
+		int z;
+		for(int col=0; col<9; col++) {
+			z = g.getCellValue(col, y);
+			if((col != x) && (z == value)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// True iff placing value at (x,y) would conflict with other value in col x
+	public static boolean colClash(Grid g, int x, int y, int value) {
+		int z;
+		for(int row=0; row<9; row++) {
+			z = g.getCellValue(x, row);
+			if((row != y) && (z == value)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// True iff placing value at (x,y) would conflict with other value in same
+	// box as (x,y)
+	public static boolean boxClash(Grid g, int x, int y, int value) {
+		int z;
+		int topLeftX = x - (x % 3);
+		int topLeftY = y - (y % 3);
+		for(int col=topLeftX; col<topLeftX+3; col++) {
+			for(int row=topLeftY; row<topLeftY+3; row++) {
+				z = g.getCellValue(col, row);
+				if(((col != x) || (row != y)) && (z == value)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	// Set a random empty cell to a random value 1-9
 	public static void fillRandomCell(Grid g) {
 		int x,y,value;
 		while(true) {
@@ -2164,7 +2073,7 @@ class Generator {
 			if(g.getCellValue(x, y) != 0) {
 				continue;
 			}
-			if(!Utilities.rowClash(g, x, y, value) && !Utilities.colClash(g, x, y, value) && !Utilities.boxClash(g, x, y, value)) {
+			if(!rowClash(g, x, y, value) && !colClash(g, x, y, value) && !boxClash(g, x, y, value)) {
 				g.setCellValue(x, y, value);
 				g.setCellImmutability(x, y, true);
 				break;
@@ -2172,6 +2081,7 @@ class Generator {
 		}
 	}
 
+	// Fill in a few (up to 20) cells
 	public static void setupTrivialPuzzle(Grid g) {
 		for(int i=0; i<20; i++) {
 			fillRandomCell(g);
@@ -2180,6 +2090,7 @@ class Generator {
 
 }
 
+// Hold search history for backtracking algorithm
 class History {
 
 	class Node {
@@ -2206,8 +2117,9 @@ class History {
 	}
 
 	private Node root;
-	private Node ptr;
+	private Node ptr; // current position in search
 
+	// Construct with dummy root node
 	public History() {
 		root = new Node(-1, -1, null);
 		ptr = root;
@@ -2217,19 +2129,13 @@ class History {
 		Node n = new Node(location, value, ptr);
 		ptr.addChild(n);
 		ptr = n;
-
-		// System.out.println("Adding (loc: "+Integer.toString(n.location)+", val="+Integer.toString(n.value)+") as child of "+Integer.toString((n.parent).location)+", val="+Integer.toString((n.parent).value)+")");
 	}
 
 	public void moveUp() {
-		// System.out.println("Backtracking from: "+Integer.toString(ptr.location)+" to "+Integer.toString((ptr.parent).location));
 		ptr = ptr.parent;
 	}
 
 	public ArrayList<Integer> previousGuesses(int loc) {
-		// while(ptr.location != loc) {
-		// 	moveUp();
-		// }
 		// Get to parent of relevant cell, e.g. root node for cell 0
 		moveUp();
 
@@ -2240,19 +2146,14 @@ class History {
 			guesses.add(n.value);
 		}
 
-		// System.out.println("Previous values of"+Integer.toString((ptr.location))+" are: ");
-		// for(Integer i: guesses) {
-		// 	System.out.print(Integer.toString(i)+" ");
-		// }
-		// System.out.println();
-
 		return guesses;
 
 	}
 }
 
+// Sudoku puzzle solver
 class Solver {
-	private int pointer;
+	private int pointer; // Grid location, compressed as (9*row) + column
 	private int steps;
 
 	public Solver() {
@@ -2261,10 +2162,10 @@ class Solver {
 	}
 
 	private Cell cellAtPointer(Grid g) {
-		// System.out.println(Integer.toString(pointer));
 		return g.getCell(pointer / 9, pointer % 9);
 	}
 
+	// Increment pointer until we reach empty Cell, and return it
 	private Cell findFirstBlank(Grid g) {
 		Cell c;
 		while(pointer < 81) {
@@ -2278,6 +2179,8 @@ class Solver {
 		return null;
 	}
 
+	// Increment pointer until we reach empty Cell, and return it
+	// Increment steps
 	private Cell findNextBlank(Grid g) {
 		steps++;
 		Cell c;
@@ -2292,6 +2195,7 @@ class Solver {
 		return null;
 	}
 
+	// Return to pointer to last mutable Cell
 	private Cell backtrack(Grid g) {
 		steps++;
 		Cell c;
@@ -2322,8 +2226,10 @@ class Solver {
 		Cell c = findFirstBlank(g);
 		if(c == null) {
 			if(g.isSolution()) {
+				// Trivial case
 				return true;
 			} else {
+				// Impossible case
 				System.out.println("Couldn't find first blank");
 				return false;
 			}
@@ -2339,12 +2245,12 @@ class Solver {
 
 			if(stepLimit > 0) {
 				if(steps == stepLimit) {
-					// System.out.println(Integer.toString(steps)+" steps reahced");
 					return false;
 				}
 			}
 
 			do {
+				// Tried all numbers; break and backtrack
 				if(guesses.size() == 9) {
 					break;
 				}
@@ -2370,15 +2276,14 @@ class Solver {
 				}
 
 				// See if it conflicts
-
 				clashes = g.getNumberOfClashes();
 
 			} while(clashes > 0);
 
 			guesses.clear();
 
+			// All guesses bad, have to backtrack
 			if(clashes > 0) {
-				// All guesses bad, have to backtrack
 
 				c.setValue(0);
 				g.updateClash(pointer / 9, pointer % 9);
@@ -2394,23 +2299,22 @@ class Solver {
 					}
 				}
 
+				// Move pointer back to last Cell guessed and call it c
 				c = backtrack(g);
+				// Lookup all previous guesses at c: these won't be guessed again.
+				// If guesses.size() == 9 we will automatically backtrack again.
 				guesses = hist.previousGuesses(pointer);
 				if(c == null) {
 					System.out.println("Failed to backtrack");
 					return false;
 				}
-
-
+			// Acceptable guess; store it and move to next space
 			} else {
 				hist.addNode(pointer, c.getValue());
-
 				c = findNextBlank(g);
-				// System.out.println(Integer.toString(pointer)+": "+(firstBlank.getValue()));
 			}
-
+			// Couldn't find another cell, puzzle is unsolvable
 			if((c == null) && !(g.isSolution())) {
-				// Couldn't find another cell, puzzle is unsolvable
 				System.out.println("Couldn't find next blank");
 				return false;
 			}
