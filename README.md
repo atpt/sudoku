@@ -28,3 +28,8 @@ to create an executable .jar on Mac/Linux
 # Use
 
 Follow the instructions on the main menu. For an explanation of the scoring system, refer to comments in ```MyGui.calcUserScore()```.
+
+# Looks like this
+
+![Menu](../master/screenshots/menu.png?raw=true "Menu")
+![Game](../master/screenshots/game.png?raw=true "Game")
